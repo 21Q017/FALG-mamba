@@ -1,0 +1,12 @@
+torch>=2.1
+torchaudio>=2.1
+numpy
+pandas
+tqdm
+soundfile
+librosa
+scipy
+scikit-learn
+einops
+# Mamba-2 selective-scan kernels (install matching your CUDA/torch):
+#   pip install causal-conv1d>=1.4.0 mamba-ssm>=2.2.0
