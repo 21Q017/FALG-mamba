@@ -1,4 +1,4 @@
-# FALG-Mamba (KBS) — experiment code
+# FALG-Mamba — experiment code
 
 Lightweight multi-level frequency-aware state-space model for raw-waveform audio
 deepfake detection. This release contains only the **best configuration**; the
