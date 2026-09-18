@@ -160,12 +160,14 @@ def aux_scale(epoch: int, start_epoch: int, warmup_epochs: int, base_value: floa
 def forward_best_loss(model, data, labels, epoch: int, args):
     logits, emb = model(data, return_embedding=True)
     wce = weighted_ce_loss(logits, labels, args.w_spoof, args.w_bonafide)
-    rank = pairwise_rank_loss(logits, labels, margin=args.rank_margin, max_pairs=args.rank_max_pairs)
     lam_rank = aux_scale(epoch, args.aux_start_epoch, args.aux_warmup_epochs, args.rank_lambda)
     lam_oc = aux_scale(epoch, args.aux_start_epoch, args.aux_warmup_epochs, args.oc_lambda)
     if not hasattr(model, "oc_head"):
         raise RuntimeError("Current best loss requires model.oc_head. Keep --use_oc enabled.")
-    loss = wce + lam_rank * rank + lam_oc * model.oc_head(emb, labels)
+    loss = wce + lam_oc * model.oc_head(emb, labels)
+    if lam_rank != 0.0:
+        rank = pairwise_rank_loss(logits, labels, margin=args.rank_margin, max_pairs=args.rank_max_pairs)
+        loss = loss + lam_rank * rank
     return loss, logits
 
 

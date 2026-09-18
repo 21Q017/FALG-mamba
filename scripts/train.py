@@ -159,12 +159,14 @@ def aux_scale(epoch: int, start_epoch: int, warmup_epochs: int, base_value: floa
 def forward_best_loss(model, data, labels, epoch: int, args):
     logits, emb = model(data, return_embedding=True)
     wce = weighted_ce_loss(logits, labels, args.w_spoof, args.w_bonafide)
-    rank = pairwise_rank_loss(logits, labels, margin=args.rank_margin, max_pairs=args.rank_max_pairs)
     lam_rank = aux_scale(epoch, args.aux_start_epoch, args.aux_warmup_epochs, args.rank_lambda)
     lam_oc = aux_scale(epoch, args.aux_start_epoch, args.aux_warmup_epochs, args.oc_lambda)
     if not hasattr(model, "oc_head"):
         raise RuntimeError("Current best loss requires model.oc_head. Keep --use_oc enabled.")
-    loss = wce + lam_rank * rank + lam_oc * model.oc_head(emb, labels)
+    loss = wce + lam_oc * model.oc_head(emb, labels)
+    if lam_rank != 0.0:
+        rank = pairwise_rank_loss(logits, labels, margin=args.rank_margin, max_pairs=args.rank_max_pairs)
+        loss = loss + lam_rank * rank
     return loss, logits
 
 
@@ -939,12 +941,13 @@ def parse_args():
 
     parser.add_argument("--w_spoof", type=float, default=0.1)
     parser.add_argument("--w_bonafide", type=float, default=0.9)
-    parser.add_argument("--rank_lambda", type=float, default=0.1)
+    parser.add_argument("--rank_lambda", type=float, default=0.0)
     parser.add_argument("--rank_margin", type=float, default=0.5)
     parser.add_argument("--rank_max_pairs", type=int, default=4096)
     parser.add_argument("--oc_lambda", type=float, default=0.02)
-    parser.add_argument("--aux_start_epoch", type=int, default=8)
-    parser.add_argument("--aux_warmup_epochs", type=int, default=5)
+    # Auxiliary losses use their fixed coefficients from the first epoch.
+    parser.add_argument("--aux_start_epoch", type=int, default=0)
+    parser.add_argument("--aux_warmup_epochs", type=int, default=0)
 
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--eval_batch_size", type=int, default=256)
@@ -1050,7 +1053,7 @@ def main():
     print(f"Train: 2019LA train N={len(train_set)}")
     print(f"Validate/select: 2019LA official dev N={len(dev_loader.dataset)} -> lowest dev EER")
     print(f"Test (full official partitions): 2021DF phase={args.df_eval_phase} | 2021LA phase={args.la_eval_phase}")
-    print(f"Fixed recipe: rawboost={args.rawboost_algos} loss=WCE+Rank+OC({args.oc_lambda}) fusion=attn prior=0.0")
+    print(f"Loss recipe: rawboost={args.rawboost_algos} loss=WCE+OC({args.oc_lambda}) rank_lambda={args.rank_lambda} fusion=attn prior=0.0")
     print("Score convention: raw un-normalized logits[:,1]-logits[:,0]")
 
     optimizer = build_optimizer(model, args)

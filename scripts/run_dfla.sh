@@ -13,6 +13,6 @@ python3 scripts/train.py --route dfla -o "$OUT" \
   --rawboost_algos 1,2,3 \
   --epochs 30 --batch_size 64 --eval_batch_size 256 \
   --base_lr 5e-4 --warmup 3000 --grad_clip 0.5 --weight_decay 1e-4 \
-  --rank_lambda 0.1 --rank_margin 0.5 --oc_lambda 0.02 \
-  --aux_start_epoch 8 --aux_warmup_epochs 5 \
+  --rank_lambda 0 --rank_margin 0 --oc_lambda 0.02 \
+  --aux_start_epoch 0 --aux_warmup_epochs 0 \
   --num_workers 8
