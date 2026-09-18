@@ -13,9 +13,14 @@ included.
 | Cross-level fusion | token-wise attention (`attn`), time grid = `middle`, prior strength 0 |
 | Backbone | 6 × (depthwise conv + Mamba-2) with **alternating scan** (`alt`) |
 | Front end | multi-level Sinc + SE-Res2Net, pre-activation fix |
-| Loss | weighted CE (0.1/0.9) + pairwise rank + OC-Softmax (λ = 0.02) |
+| Loss | weighted CE (0.1/0.9) + OC-Softmax (λ = 0.02); ranking disabled |
 | Score | raw classifier logits, `score = logits[:,1] - logits[:,0]` |
 | Params | 0.50 M |
+
+Auxiliary-loss warmup is disabled in the default trainer and all released run
+scripts. OC-Softmax uses its fixed coefficient of 0.02 from epoch 1, and the
+pairwise ranking coefficient is 0. Ranking is skipped when its coefficient is
+zero. This is separate from the learning-rate warmup controlled by `--warmup`.
 
 ## Protocol
 
